@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 
 
 namespace SMSGeneration
@@ -9,153 +10,64 @@ namespace SMSGeneration
 
         public string CreateSmsNumber(string emailBody)
         {
-            // Convert HTML Body Text into plain text
-            HtmlToText htt = new HtmlToText();
-            string emailBodyText = htt.ConvertHtml(emailBody);
-
-            //Extract SMS number from email
-            var mobileregex = new Regex(@"Usage for\s(.\d+)");
-            var mobilematch = mobileregex.Match(emailBodyText);
-
-            // Convert UK national SMS number into international format
+            Match match = new Regex("Usage for\\s(.\\d+)").Match(new HtmlToText().ConvertHtml(emailBody));
             string pattern = "^0";
             string replacement = "44";
-            string nationalSms = (mobilematch.Groups[1].ToString());
-            Regex convertRgx = new Regex(pattern);
-            Smsnumber = convertRgx.Replace(nationalSms, replacement);
-
-            //Return SMS number back to MiCC Enterprise script
+            string input = match.Groups[1].ToString();
+            this.Smsnumber = new Regex(pattern).Replace(input, replacement);
             return Smsnumber;
         }
 
-        public string CreateSmsText(string emailBody)
+        public string CreateSmsText(string Smsnumber, string emailBody)
         {
-            // Convert HTML Body Text into plain text
-            HtmlToText htt = new HtmlToText();
-            string emailBodyText = htt.ConvertHtml(emailBody);
-
-            //Extract usage limit from email
-            var costregex = new Regex(@"exceeded\s£(.\d\..\d)");
-            var costmatch = costregex.Match(emailBodyText);
-
-            //Calculate customer usage limit
-            decimal saleprice = decimal.Parse(costmatch.Groups[1].Value) * 2;
-
-            //Create SMS Text
-            string smstext = ($"Dear Customer, Usage Limit for {Smsnumber} has exceeded £{saleprice} Total Cost");
-
-            //Return SMS text back to MiCC Enterprise
-            return smstext;
+            return $"Dear Customer, Usage Limit for {this.Smsnumber} has exceeded £{(Decimal.Parse(new Regex("exceeded\\s£(.\\d+\\.\\d+)").Match(new HtmlToText().ConvertHtml(emailBody)).Groups[1].Value) * new Decimal(2))} Total Cost";
         }
 
         public string CreateSmsTextData(string emailBody)
         {
-            // Convert HTML Body text to plain text
-            HtmlToText htt = new HtmlToText();
-            string emailBodyText = htt.ConvertHtml(emailBody);
-
-            // Extract Data Limit from email
-            var dataregex = new Regex(@"exceeded (.*) Data");
-            var datamatch = dataregex.Match(emailBodyText);
-
-            // Create SMS Text
-            string smstext = ($"Dear Customer, Your data limit of {datamatch.Groups[1].Value}MB has been reached and an Auto-Bar applied");
-            // return text string
-            return smstext;
+            return $"Dear Customer, Your data limit of {new Regex("exceeded\\s(.*)\\sTotal Data").Match(new HtmlToText().ConvertHtml(emailBody)).Groups[1].Value}MB has been reached and an Auto-Bar applied";
         }
 
         public string Customer(string emailBody)
         {
-            // Convert HTML Body to Plain text
-            HtmlToText htt = new HtmlToText();
-            string emailBodyText = htt.ConvertHtml(emailBody);
-
-            Regex regex = new Regex(@"Cost Centre: (.*) > >");
-            Match Customer = regex.Match(emailBodyText);
-
-            if (Customer.Success)
-            {
-                return (Customer.Groups[1].Value);
-            }
-            else
-            {
-                return "Error";
-            }
-
+            Match match = new Regex("Cost Centre:\\s+(.*) > >").Match(new HtmlToText().ConvertHtml(emailBody));
+            if (match.Success)
+                return match.Groups[1].Value;
+            return "Error";
         }
 
         public string UsageType(string emailBody)
         {
-            // Convert HTML Body to Plain text
-            HtmlToText html = new HtmlToText();
-            string emailBodyText = html.ConvertHtml(emailBody);
-
-            // Extract Usage Type
-            Regex regex = new Regex(@"Usage Alert - (.*)");
-            Match Usage = regex.Match(emailBodyText);
-
-            if (Usage.Success)
-            {
-                return (Usage.Groups[1].Value);
-            }
-            else
-            {
-                return "Error";
-            }
-
+            Match match = new Regex("Usage Alert - (.*)").Match(new HtmlToText().ConvertHtml(emailBody));
+            if (match.Success)
+                return match.Groups[1].Value;
+            return "Error";
         }
 
         public string Date(string emailBody)
         {
-            HtmlToText html = new HtmlToText();
-            string emailBodyText = html.ConvertHtml(emailBody);
-            Regex regex = new Regex(@"triggered on(.*)");
-            Match Date = regex.Match(emailBodyText);
-            if (Date.Success)
-            {
-                return (Date.Groups[1].Value);
-            }
-            else
-            {
-                return "Error";
-            }
+            Match match = new Regex("triggered on(.*)").Match(new HtmlToText().ConvertHtml(emailBody));
+            if (match.Success)
+                return match.Groups[1].Value;
+            return "Error";
         }
 
         public string User(string emailBody)
         {
-            HtmlToText html = new HtmlToText();
-            string emailBodyText = html.ConvertHtml(emailBody);
-            Regex regex = new Regex(@"\((.*)\)");
-            Match Username = regex.Match(emailBodyText);
-            if (Username.Success)
-            {
-                return (Username.Groups[1].Value);
-            }
-            else
-            {
-                return "Error";
-            }
+            Match match = new Regex("\\((.*)\\)").Match(new HtmlToText().ConvertHtml(emailBody));
+            if (match.Success)
+                return match.Groups[1].Value;
+            return "Error";
         }
 
         public string DataUsage(string emailBody)
         {
-            HtmlToText htt = new HtmlToText();
-            string emailBodyText = htt.ConvertHtml(emailBody);
-            Regex regex = new Regex(@"exceeded (.*) Data");
-            Match Usage = regex.Match(emailBodyText);
-            return (Usage.Groups[1].Value);
+            return new Regex("exceeded\\s(.*)\\sTotal Data").Match(new HtmlToText().ConvertHtml(emailBody)).Groups[1].Value;
         }
         
         public string MoneyUsage(string emailBody)
         {
-            HtmlToText htt = new HtmlToText();
-            string emailBodyText = htt.ConvertHtml(emailBody);
-            var costregex = new Regex(@"exceeded\s£(.\d\..\d)");
-            var costmatch = costregex.Match(emailBodyText);
-
-            //Calculate customer usage limit
-            decimal saleprice = decimal.Parse(costmatch.Groups[1].Value) * 2;
-            return saleprice.ToString();
+            return (Decimal.Parse(new Regex("exceeded\\s£(.\\d+\\..\\d+)").Match(new HtmlToText().ConvertHtml(emailBody)).Groups[1].Value) * new Decimal(2)).ToString();
         }
 
     }
